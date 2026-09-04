@@ -3,6 +3,7 @@ export type Customer = {
   name: string;
   phone: string;
   appliedAt: string;
+  manageMonth: string;
   assignee: string;
   status: string;
   region: string;
@@ -19,4 +20,6 @@ export type ListResponse = {
   total: number;
   assignees: string[];
   statusCounts: Record<string, number>;
+  appliedMonths: string[];
+  manageMonths: string[];
 };

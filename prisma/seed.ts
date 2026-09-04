@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
 import { normalizeStatus } from "../src/lib/constants";
+import { deriveManageMonth } from "../src/lib/manageMonth";
 
 const prisma = new PrismaClient();
 
@@ -26,18 +27,22 @@ async function main() {
 
   const mapped = raw
     .filter((r) => r.이름)
-    .map((r) => ({
-      name: (r.이름 || "").trim(),
-      phone: (r.연락처 || "").trim(),
-      appliedAt: (r.날짜 || "").trim(),
-      assignee: (r.담당자 || "").trim(),
-      status: normalizeStatus(r.상태 || "신규"),
-      region: (r.지역 || "").trim(),
-      debtAmount: String(r.채무액 ?? "").trim(),
-      job: (r.직업 || "").trim(),
-      source: (r.타이틀 || "").trim(),
-      memo: (r["2차상담"] || "").trim(),
-    }));
+    .map((r) => {
+      const appliedAt = (r.날짜 || "").trim();
+      return {
+        name: (r.이름 || "").trim(),
+        phone: (r.연락처 || "").trim(),
+        appliedAt,
+        manageMonth: deriveManageMonth(appliedAt),
+        assignee: (r.담당자 || "").trim(),
+        status: normalizeStatus(r.상태 || "신규"),
+        region: (r.지역 || "").trim(),
+        debtAmount: String(r.채무액 ?? "").trim(),
+        job: (r.직업 || "").trim(),
+        source: (r.타이틀 || "").trim(),
+        memo: (r["2차상담"] || "").trim(),
+      };
+    });
 
   const result = await prisma.customer.createMany({ data: mapped });
   console.log(`Seeded ${result.count} customers from dohyun_2cha_sep.json`);

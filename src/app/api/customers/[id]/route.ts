@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeStatus } from "@/lib/constants";
+import { normalizeManageMonth, resolveManageMonth } from "@/lib/manageMonth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     "name",
     "phone",
     "appliedAt",
+    "manageMonth",
     "assignee",
     "status",
     "region",
@@ -26,12 +28,24 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     "memo",
   ] as const) {
     if (body[key] !== undefined) {
-      data[key] =
-        key === "status"
-          ? normalizeStatus(String(body[key]))
-          : String(body[key]).trim();
+      if (key === "status") {
+        data[key] = normalizeStatus(String(body[key]));
+      } else if (key === "manageMonth") {
+        data[key] = normalizeManageMonth(String(body[key]));
+      } else {
+        data[key] = String(body[key]).trim();
+      }
     }
   }
+
+  // If appliedAt changed and manageMonth not explicitly set, auto-fill only when empty
+  if (data.appliedAt !== undefined && data.manageMonth === undefined) {
+    const existing = await prisma.customer.findUnique({ where: { id } });
+    if (existing && !existing.manageMonth) {
+      data.manageMonth = resolveManageMonth("", data.appliedAt);
+    }
+  }
+
   const customer = await prisma.customer.update({ where: { id }, data });
   return NextResponse.json(customer);
 }

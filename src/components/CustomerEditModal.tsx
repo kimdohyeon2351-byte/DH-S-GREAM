@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { STATUS_OPTIONS } from "@/lib/constants";
+import { currentManageMonth, deriveManageMonth } from "@/lib/manageMonth";
 import type { Customer } from "./types";
 
 type Props = {
@@ -15,6 +16,7 @@ const empty: Omit<Customer, "id"> = {
   name: "",
   phone: "",
   appliedAt: "",
+  manageMonth: "",
   assignee: "",
   status: "신규",
   region: "",
@@ -38,6 +40,7 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
         name: customer.name,
         phone: customer.phone,
         appliedAt: customer.appliedAt,
+        manageMonth: customer.manageMonth || "",
         assignee: customer.assignee,
         status: customer.status,
         region: customer.region,
@@ -47,7 +50,7 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
         memo: customer.memo,
       });
     } else {
-      setForm(empty);
+      setForm({ ...empty, manageMonth: currentManageMonth() });
     }
   }, [customer, open]);
 
@@ -61,12 +64,19 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
     setSaving(true);
     setError("");
     try {
+      const payload = {
+        ...form,
+        manageMonth:
+          form.manageMonth.trim() ||
+          deriveManageMonth(form.appliedAt) ||
+          currentManageMonth(),
+      };
       const url = isNew ? "/api/customers" : `/api/customers/${customer!.id}`;
       const method = isNew ? "POST" : "PATCH";
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("저장 실패");
       onSaved();
@@ -79,7 +89,15 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
   }
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm((f) => {
+      const next = { ...f, [key]: value };
+      // When appliedAt changes and manageMonth empty, suggest derived month
+      if (key === "appliedAt" && !f.manageMonth) {
+        const derived = deriveManageMonth(String(value));
+        if (derived) next.manageMonth = derived;
+      }
+      return next;
+    });
   }
 
   return (
@@ -94,6 +112,14 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
         <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="신청일">
             <input className="field" value={form.appliedAt} onChange={(e) => set("appliedAt", e.target.value)} placeholder="YYYY-MM-DD" />
+          </Field>
+          <Field label="관리월">
+            <input
+              className="field"
+              type="month"
+              value={form.manageMonth}
+              onChange={(e) => set("manageMonth", e.target.value)}
+            />
           </Field>
           <Field label="이름 *">
             <input className="field" value={form.name} onChange={(e) => set("name", e.target.value)} />

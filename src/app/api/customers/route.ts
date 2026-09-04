@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeStatus } from "@/lib/constants";
+import {
+  appliedMonthFromDate,
+  resolveManageMonth,
+} from "@/lib/manageMonth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +13,13 @@ export async function GET(req: NextRequest) {
   const q = (searchParams.get("q") || "").trim();
   const assignee = (searchParams.get("assignee") || "").trim();
   const status = (searchParams.get("status") || "").trim();
+  const appliedMonth = (searchParams.get("appliedMonth") || "").trim();
+  const manageMonth = (searchParams.get("manageMonth") || "").trim();
 
   const where: Record<string, unknown> = {};
   if (assignee) where.assignee = assignee;
   if (status) where.status = status;
+  if (manageMonth) where.manageMonth = manageMonth;
   if (q) {
     where.OR = [
       { name: { contains: q } },
@@ -21,22 +28,49 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  const [customers, total, assignees, statusGroups] = await Promise.all([
-    prisma.customer.findMany({
-      where,
-      orderBy: [{ appliedAt: "desc" }, { id: "desc" }],
-    }),
-    prisma.customer.count({ where }),
-    prisma.customer.findMany({
-      select: { assignee: true },
-      distinct: ["assignee"],
-      orderBy: { assignee: "asc" },
-    }),
-    prisma.customer.groupBy({
-      by: ["status"],
-      _count: { _all: true },
-    }),
-  ]);
+  // appliedMonth filters on appliedAt string prefix (YYYY-MM / YYYY.MM / etc.)
+  // Fetch candidates then filter in JS when appliedMonth set, OR use OR contains patterns.
+  const [allForMonths, customersRaw, totalRaw, assignees, statusGroups] =
+    await Promise.all([
+      prisma.customer.findMany({
+        select: { appliedAt: true, manageMonth: true },
+      }),
+      prisma.customer.findMany({
+        where,
+        orderBy: [{ appliedAt: "desc" }, { id: "desc" }],
+      }),
+      prisma.customer.count({ where }),
+      prisma.customer.findMany({
+        select: { assignee: true },
+        distinct: ["assignee"],
+        orderBy: { assignee: "asc" },
+      }),
+      prisma.customer.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+      }),
+    ]);
+
+  let customers = customersRaw;
+  let total = totalRaw;
+
+  if (appliedMonth) {
+    customers = customersRaw.filter((c) => {
+      const m = appliedMonthFromDate(c.appliedAt);
+      return m === appliedMonth;
+    });
+    total = customers.length;
+  }
+
+  const appliedMonthsSet = new Set<string>();
+  const manageMonthsSet = new Set<string>();
+  for (const row of allForMonths) {
+    const am = appliedMonthFromDate(row.appliedAt);
+    if (am) appliedMonthsSet.add(am);
+    if (row.manageMonth) manageMonthsSet.add(row.manageMonth);
+  }
+
+  const sortDesc = (a: string, b: string) => (a < b ? 1 : a > b ? -1 : 0);
 
   return NextResponse.json({
     customers,
@@ -45,16 +79,24 @@ export async function GET(req: NextRequest) {
     statusCounts: Object.fromEntries(
       statusGroups.map((g) => [g.status, g._count._all])
     ),
+    appliedMonths: Array.from(appliedMonthsSet).sort(sortDesc),
+    manageMonths: Array.from(manageMonthsSet).sort(sortDesc),
   });
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  const appliedAt = String(body.appliedAt || "").trim();
+  const manageMonth = resolveManageMonth(
+    body.manageMonth != null ? String(body.manageMonth) : "",
+    appliedAt
+  );
   const customer = await prisma.customer.create({
     data: {
       name: String(body.name || "").trim() || "이름없음",
       phone: String(body.phone || "").trim(),
-      appliedAt: String(body.appliedAt || "").trim(),
+      appliedAt,
+      manageMonth,
       assignee: String(body.assignee || "").trim(),
       status: normalizeStatus(String(body.status || "신규")),
       region: String(body.region || "").trim(),

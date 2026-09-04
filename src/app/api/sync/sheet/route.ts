@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhone, type CustomerInput } from "@/lib/csv";
 import { parseGoogleSourceXlsx, resolveSourcePath } from "@/lib/sheetSync";
+import { resolveManageMonth } from "@/lib/manageMonth";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ type DbCustomer = {
   name: string;
   phone: string;
   appliedAt: string;
+  manageMonth: string;
   assignee: string;
   status: string;
   region: string;
@@ -110,13 +112,18 @@ async function upsertCustomer(
     existing = byNameDate.get(`${row.name}||${row.appliedAt || ""}`);
   }
 
+  // mapRow already derives manageMonth; ensure again for safety
+  const rowManage = resolveManageMonth(row.manageMonth, row.appliedAt);
+  const rowWithMonth: CustomerInput = { ...row, manageMonth: rowManage };
+
   if (!existing) {
-    const createdRow = await prisma.customer.create({ data: row });
+    const createdRow = await prisma.customer.create({ data: rowWithMonth });
     const mapped: DbCustomer = {
       id: createdRow.id,
       name: createdRow.name,
       phone: createdRow.phone,
       appliedAt: createdRow.appliedAt,
+      manageMonth: createdRow.manageMonth,
       assignee: createdRow.assignee,
       status: createdRow.status,
       region: createdRow.region,
@@ -131,22 +138,26 @@ async function upsertCustomer(
   }
 
   const data = {
-    name: pickPresent(row.name, existing.name),
-    phone: pickPresent(row.phone, existing.phone),
-    appliedAt: pickPresent(row.appliedAt, existing.appliedAt),
-    assignee: pickPresent(row.assignee, existing.assignee),
-    status: pickPresent(row.status, existing.status),
-    region: pickPresent(row.region, existing.region),
-    debtAmount: pickPresent(row.debtAmount, existing.debtAmount),
-    job: pickPresent(row.job, existing.job),
-    source: pickPresent(row.source, existing.source),
-    memo: (row.memo || "").trim() !== "" ? row.memo : existing.memo,
+    name: pickPresent(rowWithMonth.name, existing.name),
+    phone: pickPresent(rowWithMonth.phone, existing.phone),
+    appliedAt: pickPresent(rowWithMonth.appliedAt, existing.appliedAt),
+    manageMonth: existing.manageMonth
+      ? pickPresent(rowWithMonth.manageMonth, existing.manageMonth)
+      : resolveManageMonth(rowWithMonth.manageMonth, pickPresent(rowWithMonth.appliedAt, existing.appliedAt)),
+    assignee: pickPresent(rowWithMonth.assignee, existing.assignee),
+    status: pickPresent(rowWithMonth.status, existing.status),
+    region: pickPresent(rowWithMonth.region, existing.region),
+    debtAmount: pickPresent(rowWithMonth.debtAmount, existing.debtAmount),
+    job: pickPresent(rowWithMonth.job, existing.job),
+    source: pickPresent(rowWithMonth.source, existing.source),
+    memo: (rowWithMonth.memo || "").trim() !== "" ? rowWithMonth.memo : existing.memo,
   };
 
   const changed =
     data.name !== existing.name ||
     data.phone !== existing.phone ||
     data.appliedAt !== existing.appliedAt ||
+    data.manageMonth !== existing.manageMonth ||
     data.assignee !== existing.assignee ||
     data.status !== existing.status ||
     data.region !== existing.region ||

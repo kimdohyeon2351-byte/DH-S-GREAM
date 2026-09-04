@@ -1,9 +1,11 @@
 import { normalizeStatus } from "./constants";
+import { resolveManageMonth } from "./manageMonth";
 
 export type CustomerInput = {
   name: string;
   phone: string;
   appliedAt: string;
+  manageMonth: string;
   assignee: string;
   status: string;
   region: string;
@@ -26,6 +28,9 @@ export const HEADER_MAP: Record<string, keyof CustomerInput> = {
   상담신청일자: "appliedAt",
   날짜: "appliedAt",
   appliedAt: "appliedAt",
+  관리월: "manageMonth",
+  manageMonth: "manageMonth",
+  "관리 월": "manageMonth",
   담당자: "assignee",
   assignee: "assignee",
   상담단계: "status",
@@ -65,6 +70,7 @@ export function normalizePhone(phone: string): string {
 /**
  * Map a sheet/CSV row. When the same field maps from multiple columns
  * (e.g. two 담당자 columns), the last non-empty value wins.
+ * manageMonth: use header if present, else derive from appliedAt.
  */
 export function mapRow(headers: string[], values: string[]): CustomerInput | null {
   const raw: Partial<CustomerInput> = {};
@@ -76,10 +82,12 @@ export function mapRow(headers: string[], values: string[]): CustomerInput | nul
     }
   });
   if (!raw.name) return null;
+  const appliedAt = raw.appliedAt || "";
   return {
     name: raw.name,
     phone: raw.phone || "",
-    appliedAt: raw.appliedAt || "",
+    appliedAt,
+    manageMonth: resolveManageMonth(raw.manageMonth, appliedAt),
     assignee: raw.assignee || "",
     status: normalizeStatus(raw.status || "신규"),
     region: raw.region || "",

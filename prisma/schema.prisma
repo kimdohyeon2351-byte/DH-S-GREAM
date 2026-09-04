@@ -12,6 +12,7 @@ model Customer {
   name        String
   phone       String   @default("")
   appliedAt   String   @default("")
+  manageMonth String   @default("")
   assignee    String   @default("")
   status      String   @default("신규")
   region      String   @default("")
@@ -26,4 +27,5 @@ model Customer {
   @@index([status])
   @@index([name])
   @@index([phone])
+  @@index([manageMonth])
 }

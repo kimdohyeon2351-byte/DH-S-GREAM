@@ -2,15 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/constants";
+import { currentManageMonth } from "@/lib/manageMonth";
 import type { Customer, ListResponse } from "./types";
 import CustomerEditModal from "./CustomerEditModal";
 import ImportModal from "./ImportModal";
+
+const THIS_MONTH = currentManageMonth();
 
 export default function CrmBoard() {
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
+  /** 신청월: default 전체 ("") */
+  const [appliedMonth, setAppliedMonth] = useState("");
+  /** 관리월: default 이번 달 */
+  const [manageMonth, setManageMonth] = useState(THIS_MONTH);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [editTarget, setEditTarget] = useState<Customer | null | undefined>(undefined);
   const [importOpen, setImportOpen] = useState(false);
@@ -29,13 +36,15 @@ export default function CrmBoard() {
       const params = new URLSearchParams();
       if (debouncedQ) params.set("q", debouncedQ);
       if (status) params.set("status", status);
+      if (appliedMonth) params.set("appliedMonth", appliedMonth);
+      if (manageMonth) params.set("manageMonth", manageMonth);
       const res = await fetch(`/api/customers?${params.toString()}`, { cache: "no-store" });
       const json = (await res.json()) as ListResponse;
       setData(json);
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, status]);
+  }, [debouncedQ, status, appliedMonth, manageMonth]);
 
   useEffect(() => {
     load();
@@ -44,6 +53,20 @@ export default function CrmBoard() {
   const statusFilterOptions = useMemo(() => {
     const fromData = Object.keys(data?.statusCounts || {});
     return Array.from(new Set([...STATUS_OPTIONS, ...fromData]));
+  }, [data]);
+
+  const appliedMonthOptions = useMemo(() => {
+    const list = data?.appliedMonths || [];
+    const set = new Set(list);
+    if (THIS_MONTH) set.add(THIS_MONTH);
+    return Array.from(set).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  }, [data]);
+
+  const manageMonthOptions = useMemo(() => {
+    const list = data?.manageMonths || [];
+    const set = new Set(list);
+    if (THIS_MONTH) set.add(THIS_MONTH);
+    return Array.from(set).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
   }, [data]);
 
   async function quickUpdate(id: number, patch: Partial<Customer>) {
@@ -98,7 +121,7 @@ export default function CrmBoard() {
     <div className="space-y-4">
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 flex-1">
             <label className="text-sm">
               <span className="mb-1 block text-slate-600 font-medium">검색 (이름/연락처/메모)</span>
               <input
@@ -122,6 +145,38 @@ export default function CrmBoard() {
                     {data?.statusCounts?.[s] != null ? ` (${data.statusCounts[s]})` : ""}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-600 font-medium">신청월</span>
+              <select
+                value={appliedMonth}
+                onChange={(e) => setAppliedMonth(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white"
+              >
+                <option value="">전체</option>
+                <option value={THIS_MONTH}>이번 달 ({THIS_MONTH})</option>
+                {appliedMonthOptions
+                  .filter((m) => m !== THIS_MONTH)
+                  .map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block text-slate-600 font-medium">관리월</span>
+              <select
+                value={manageMonth}
+                onChange={(e) => setManageMonth(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white"
+              >
+                <option value="">전체</option>
+                <option value={THIS_MONTH}>이번 달 ({THIS_MONTH})</option>
+                {manageMonthOptions
+                  .filter((m) => m !== THIS_MONTH)
+                  .map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
               </select>
             </label>
           </div>
@@ -162,19 +217,21 @@ export default function CrmBoard() {
           <table className="table-fixed w-full text-sm">
             <colgroup>
               <col style={{ width: "4%" }} />
-              <col style={{ width: "9%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "7%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "11%" }} />
               <col style={{ width: "11%" }} />
-              <col style={{ width: "7%" }} />
-              <col style={{ width: "7%" }} />
-              <col style={{ width: "36%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "32%" }} />
               <col style={{ width: "8%" }} />
             </colgroup>
             <thead className="bg-slate-50 text-slate-600 text-left">
               <tr>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">번호</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">신청일</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">관리월</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">이름</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">연락처</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">상담단계</th>
@@ -189,6 +246,7 @@ export default function CrmBoard() {
                 <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/70 align-top">
                   <td className="px-1.5 py-2 whitespace-nowrap tabular-nums text-slate-500">{i + 1}</td>
                   <td className="px-1.5 py-2 whitespace-nowrap">{c.appliedAt}</td>
+                  <td className="px-1.5 py-2 whitespace-nowrap tabular-nums text-slate-700">{c.manageMonth || "-"}</td>
                   <td className="px-1.5 py-2 font-medium truncate" title={c.name}>{c.name}</td>
                   <td className="px-1.5 py-2 whitespace-nowrap tabular-nums">{c.phone}</td>
                   <td className="px-1.5 py-2">
@@ -229,7 +287,7 @@ export default function CrmBoard() {
               ))}
               {!loading && (data?.customers.length || 0) === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-1.5 py-10 text-center text-slate-500">
+                  <td colSpan={10} className="px-1.5 py-10 text-center text-slate-500">
                     조건에 맞는 고객이 없습니다.
                   </td>
                 </tr>
@@ -248,6 +306,7 @@ export default function CrmBoard() {
                 <p className="text-xs text-slate-400 mb-0.5">
                   #{i + 1}
                   {c.appliedAt ? ` · ${c.appliedAt}` : ""}
+                  {c.manageMonth ? ` · 관리 ${c.manageMonth}` : ""}
                 </p>
                 <h3 className="font-semibold text-base">{c.name}</h3>
                 <p className="text-sm text-slate-600 tabular-nums">{c.phone}</p>
