@@ -100,3 +100,18 @@ export function rowToneClass(status: string): string {
   }
   return "";
 }
+
+/** Memo field/box background tone by status (no hover; keeps light borders intact). */
+export function memoToneClass(status: string): string {
+  const s = normalizeStatus(status);
+  if (s === "취소" || s === "진행불가" || s === "자격불가") {
+    return "bg-red-100";
+  }
+  if (s === "1차서류 안내") {
+    return "bg-yellow-100";
+  }
+  if (s === "수임완료") {
+    return "bg-sky-100";
+  }
+  return "bg-transparent";
+}

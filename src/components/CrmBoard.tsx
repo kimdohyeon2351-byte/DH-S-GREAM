@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { STATUS_COLORS, STATUS_OPTIONS, rowToneClass } from "@/lib/constants";
+import { STATUS_COLORS, STATUS_OPTIONS, memoToneClass, rowToneClass } from "@/lib/constants";
 import { currentManageMonth } from "@/lib/manageMonth";
 import type { Customer, ListResponse } from "./types";
 import CustomerEditModal from "./CustomerEditModal";
@@ -271,7 +271,7 @@ export default function CrmBoard() {
                       defaultValue={c.memo}
                       key={`${c.id}-${c.updatedAt || c.memo}`}
                       rows={3}
-                      className="w-full resize-y rounded-lg border border-slate-200 px-2 py-1 text-xs"
+                      className={`w-full resize-y rounded-lg border border-slate-200 px-2 py-1 text-xs ${memoToneClass(c.status)}`}
                       onBlur={(e) => {
                         if (e.target.value !== c.memo) quickUpdate(c.id, { memo: e.target.value });
                       }}
@@ -319,7 +319,7 @@ export default function CrmBoard() {
               <div><dt className="inline text-slate-400">지역 </dt><dd className="inline">{c.region || "-"}</dd></div>
               <div><dt className="inline text-slate-400">직업 </dt><dd className="inline">{c.job || "-"}</dd></div>
             </dl>
-            {c.memo && <p className="text-xs text-slate-700 bg-slate-50 rounded-lg p-2 whitespace-pre-wrap">{c.memo}</p>}
+            {c.memo && <p className={`text-xs text-slate-700 rounded-lg p-2 whitespace-pre-wrap ${memoToneClass(c.status)}`}>{c.memo}</p>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditTarget(c)} className="flex-1 rounded-xl bg-brand-600 text-white py-2 text-sm font-medium">수정</button>
               <button onClick={() => remove(c.id)} className="rounded-xl bg-rose-50 text-rose-700 px-3 py-2 text-sm">삭제</button>
