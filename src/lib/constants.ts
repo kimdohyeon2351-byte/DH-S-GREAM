@@ -69,21 +69,21 @@ export function normalizeStatus(raw: string): string {
 }
 
 export const STATUS_COLORS: Record<string, string> = {
-  "신규": "bg-sky-100 text-sky-800",
-  "부재": "bg-amber-100 text-amber-800",
-  "통화예약": "bg-indigo-100 text-indigo-800",
-  "재상담": "bg-violet-100 text-violet-800",
+  "신규": "bg-transparent text-slate-700",
+  "부재": "bg-transparent text-slate-700",
+  "통화예약": "bg-transparent text-slate-700",
+  "재상담": "bg-transparent text-slate-700",
   "1차서류 안내": "bg-yellow-100 text-yellow-800",
-  "1차 서류 도착": "bg-teal-100 text-teal-800",
-  "관리": "bg-orange-100 text-orange-800",
-  "내방상담": "bg-blue-100 text-blue-800",
-  "출장상담": "bg-fuchsia-100 text-fuchsia-800",
-  "계약": "bg-emerald-100 text-emerald-800",
+  "1차 서류 도착": "bg-transparent text-slate-700",
+  "관리": "bg-transparent text-slate-700",
+  "내방상담": "bg-transparent text-slate-700",
+  "출장상담": "bg-transparent text-slate-700",
+  "계약": "bg-transparent text-slate-700",
   "수임완료": "bg-sky-100 text-sky-800",
   "취소": "bg-red-100 text-red-800",
   "자격불가": "bg-red-100 text-red-800",
   "진행불가": "bg-red-100 text-red-800",
-  "종료": "bg-slate-100 text-slate-700",
+  "종료": "bg-transparent text-slate-700",
 };
 
 /** Row/card background tone by status (desktop table + mobile cards). */

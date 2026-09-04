@@ -254,7 +254,7 @@ export default function CrmBoard() {
                       value={c.status}
                       disabled={quickSavingId === c.id}
                       onChange={(e) => quickUpdate(c.id, { status: e.target.value })}
-                      className={`max-w-full rounded-full px-2 py-1 text-xs font-medium border-0 ${STATUS_COLORS[c.status] || "bg-slate-100 text-slate-700"}`}
+                      className={`max-w-full rounded-full px-2 py-1 text-xs font-medium border-0 ${STATUS_COLORS[c.status] || "bg-transparent text-slate-700"}`}
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -311,7 +311,7 @@ export default function CrmBoard() {
                 <h3 className="font-semibold text-base">{c.name}</h3>
                 <p className="text-sm text-slate-600 tabular-nums">{c.phone}</p>
               </div>
-              <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[c.status] || "bg-slate-100"}`}>
+              <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[c.status] || "bg-transparent text-slate-700"}`}>
                 {c.status}
               </span>
             </div>

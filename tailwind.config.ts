@@ -13,6 +13,11 @@ const config: Config = {
     "hover:bg-yellow-200/80",
     "bg-sky-100",
     "hover:bg-sky-200/80",
+    "bg-transparent",
+    "text-slate-700",
+    "text-red-800",
+    "text-yellow-800",
+    "text-sky-800",
   ],
   theme: {
     extend: {
