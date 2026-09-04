@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String   @default("")
+  appliedAt   String   @default("")
+  assignee    String   @default("")
+  status      String   @default("신규")
+  region      String   @default("")
+  debtAmount  String   @default("")
+  job         String   @default("")
+  source      String   @default("")
+  memo        String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([assignee])
+  @@index([status])
+  @@index([name])
+  @@index([phone])
+}
