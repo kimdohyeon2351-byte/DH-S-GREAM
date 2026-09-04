@@ -90,13 +90,13 @@ export const STATUS_COLORS: Record<string, string> = {
 export function rowToneClass(status: string): string {
   const s = normalizeStatus(status);
   if (s === "취소" || s === "진행불가" || s === "자격불가") {
-    return "bg-rose-50 hover:bg-rose-100/80";
+    return "bg-red-100 hover:bg-red-200/80";
   }
   if (s === "1차서류 안내") {
-    return "bg-amber-50 hover:bg-amber-100/80";
+    return "bg-yellow-100 hover:bg-yellow-200/80";
   }
   if (s === "수임완료") {
-    return "bg-sky-50 hover:bg-sky-100/80";
+    return "bg-sky-100 hover:bg-sky-200/80";
   }
   return "";
 }
