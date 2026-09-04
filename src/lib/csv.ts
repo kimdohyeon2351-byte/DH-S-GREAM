@@ -13,7 +13,7 @@ export type CustomerInput = {
   memo: string;
 };
 
-const HEADER_MAP: Record<string, keyof CustomerInput> = {
+export const HEADER_MAP: Record<string, keyof CustomerInput> = {
   이름: "name",
   표시명: "name",
   name: "name",
@@ -31,6 +31,9 @@ const HEADER_MAP: Record<string, keyof CustomerInput> = {
   상담단계: "status",
   상태: "status",
   status: "status",
+  "동미, 도현\n팀장님 상태열": "status",
+  "동미, 도현 팀장님 상태열": "status",
+  "동미, 도현팀장님 상태열": "status",
   지역: "region",
   region: "region",
   채무액: "debtAmount",
@@ -42,19 +45,33 @@ const HEADER_MAP: Record<string, keyof CustomerInput> = {
   source: "source",
   메모: "memo",
   "2차상담": "memo",
+  "2차 상담": "memo",
+  "2차 상담 내역": "memo",
   memo: "memo",
 };
 
-function normalizeHeader(h: string): string {
-  return h.trim().replace(/^\uFEFF/, "");
+export function normalizeHeader(h: string): string {
+  return String(h ?? "")
+    .trim()
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n");
 }
 
+/** Digits-only phone for upsert matching. */
+export function normalizePhone(phone: string): string {
+  return String(phone || "").replace(/\D/g, "");
+}
+
+/**
+ * Map a sheet/CSV row. When the same field maps from multiple columns
+ * (e.g. two 담당자 columns), the last non-empty value wins.
+ */
 export function mapRow(headers: string[], values: string[]): CustomerInput | null {
   const raw: Partial<CustomerInput> = {};
   headers.forEach((h, i) => {
     const key = HEADER_MAP[normalizeHeader(h)];
     if (key) {
-      const v = (values[i] ?? "").trim();
+      const v = String(values[i] ?? "").trim();
       if (v !== "") raw[key] = v;
     }
   });

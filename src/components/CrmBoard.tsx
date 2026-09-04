@@ -15,6 +15,8 @@ export default function CrmBoard() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [editTarget, setEditTarget] = useState<Customer | null | undefined>(undefined);
   const [importOpen, setImportOpen] = useState(false);
+  const [sheetSyncing, setSheetSyncing] = useState(false);
+  const [toast, setToast] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [quickSavingId, setQuickSavingId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -67,6 +69,33 @@ export default function CrmBoard() {
     await load();
   }
 
+
+  async function syncSheet() {
+    if (sheetSyncing) return;
+    if (!confirm("구글 시트 미러(data/google-source.xlsx)의 「2차」 탭에서 김도현 담당 행을 가져올까요?")) return;
+    setSheetSyncing(true);
+    setToast(null);
+    try {
+      const res = await fetch("/api/sync/sheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "시트 동기화 실패");
+      const msg = `시트 동기화 완료: 신규 ${data.created}건 · 갱신 ${data.updated}건 · 변경없음 ${data.skipped}건 (시트 ${data.sheetRows}행 중)`;
+      setToast({ type: "ok", text: msg });
+      alert(msg);
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "시트 동기화 실패";
+      setToast({ type: "err", text: msg });
+      alert(`동기화 실패\n${msg}`);
+    } finally {
+      setSheetSyncing(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -117,6 +146,13 @@ export default function CrmBoard() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50"
             >
               CSV 가져오기
+            </button>
+            <button
+              onClick={syncSheet}
+              disabled={sheetSyncing}
+              className="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-3 py-2 text-sm font-semibold hover:bg-emerald-100 disabled:opacity-60"
+            >
+              {sheetSyncing ? "시트 가져오는 중…" : "구글 시트에서 가져오기"}
             </button>
             <button
               onClick={() => setEditTarget(null)}
@@ -243,6 +279,24 @@ export default function CrmBoard() {
         )}
       </section>
 
+
+      {toast && (
+        <div
+          className={`rounded-xl px-4 py-3 text-sm ${
+            toast.type === "ok"
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              : "bg-rose-50 text-rose-800 border border-rose-200"
+          }`}
+        >
+          {toast.text}
+          <button
+            className="ml-3 text-xs underline"
+            onClick={() => setToast(null)}
+          >
+            닫기
+          </button>
+        </div>
+      )}
       <CustomerEditModal
         open={editTarget !== undefined}
         customer={editTarget ?? null}

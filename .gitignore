@@ -10,3 +10,7 @@ prisma/dev.db*
 .DS_Store
 *.tsbuildinfo
 .vercel
+
+# Google Sheet local mirror (large; ship separately)
+data/*.xlsx
+!data/README.md
