@@ -22,3 +22,19 @@
 - 파일은 용량이 커서 git에 올리지 않습니다. Windows PC에는 별도로 복사해 주세요.
 - CSV 가져오기 기능은 그대로 사용할 수 있습니다.
 - 전체 행을 가져오려면 API에 `?all=true` 또는 `assigneeContains=` (빈 값) 을 넘기면 됩니다.
+
+## 외부 경로 (외장/다른 드라이브)
+
+기본은 프로젝트 `data/google-source.xlsx` 입니다.  
+Windows 등에서 DB·미러를 다른 폴더에 두려면 프로젝트 루트 `.env` 에 다음을 설정하세요.
+
+```
+DATABASE_URL="file:D:/path/to/crm-data/dev.db"
+GOOGLE_SOURCE_XLSX="D:/path/to/crm-data/google-source.xlsx"
+CRM_DATA_DIR="D:/path/to/crm-data"
+```
+
+- `GOOGLE_SOURCE_XLSX` 가 있으면 그 절대 경로를 사용합니다.
+- 없으면 `CRM_DATA_DIR/google-source.xlsx` 를 사용합니다.
+- 둘 다 없으면 `data/google-source.xlsx` 입니다.
+- SQLite DB는 Prisma `DATABASE_URL` 로만 지정합니다 (파일은 같은 `crm-data` 폴더에 두면 관리가 쉽습니다).

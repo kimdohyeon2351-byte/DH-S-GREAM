@@ -7,6 +7,14 @@ export const SHEET_TAB = "2차";
 export const SOURCE_RELATIVE = path.join("data", "google-source.xlsx");
 
 export function resolveSourcePath(cwd = process.cwd()): string {
+  const fromEnv = process.env.GOOGLE_SOURCE_XLSX?.trim();
+  if (fromEnv) {
+    return path.isAbsolute(fromEnv) ? fromEnv : path.resolve(cwd, fromEnv);
+  }
+  const dataDir = process.env.CRM_DATA_DIR?.trim();
+  if (dataDir) {
+    return path.resolve(dataDir, "google-source.xlsx");
+  }
   return path.resolve(cwd, SOURCE_RELATIVE);
 }
 

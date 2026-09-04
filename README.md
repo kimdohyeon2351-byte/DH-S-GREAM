@@ -11,7 +11,17 @@
 Open http://localhost:3000
 
 ## Env
-DATABASE_URL=file:./dev.db
+기본: `DATABASE_URL=file:./dev.db` (프로젝트 루트 `dev.db`)
+
+외부 드라이브에 DB·시트 미러를 두려면 `.env` 예시:
+
+```
+DATABASE_URL="file:D:/path/to/crm-data/dev.db"
+GOOGLE_SOURCE_XLSX="D:/path/to/crm-data/google-source.xlsx"
+CRM_DATA_DIR="D:/path/to/crm-data"
+```
+
+자세한 설명: [data/README.md](data/README.md)
 
 ## Seed
 Loads 25 customers from prisma/data/dohyun_2cha_sep.json
