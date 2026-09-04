@@ -1,5 +1,6 @@
 import { normalizeStatus } from "./constants";
 import { resolveManageMonth } from "./manageMonth";
+import { fillJurisdiction } from "./jurisdiction";
 
 export type CustomerInput = {
   name: string;
@@ -9,6 +10,7 @@ export type CustomerInput = {
   assignee: string;
   status: string;
   region: string;
+  jurisdiction: string;
   debtAmount: string;
   job: string;
   source: string;
@@ -41,6 +43,8 @@ export const HEADER_MAP: Record<string, keyof CustomerInput> = {
   "동미, 도현팀장님 상태열": "status",
   지역: "region",
   region: "region",
+  관할: "jurisdiction",
+  jurisdiction: "jurisdiction",
   채무액: "debtAmount",
   debtAmount: "debtAmount",
   직업: "job",
@@ -91,6 +95,7 @@ export function mapRow(headers: string[], values: string[]): CustomerInput | nul
     assignee: raw.assignee || "",
     status: normalizeStatus(raw.status || "신규"),
     region: raw.region || "",
+    jurisdiction: fillJurisdiction(raw.region || "", raw.jurisdiction || ""),
     debtAmount: raw.debtAmount || "",
     job: raw.job || "",
     source: raw.source || "",

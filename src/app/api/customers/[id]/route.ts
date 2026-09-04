@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizeStatus } from "@/lib/constants";
 import { normalizeManageMonth, resolveManageMonth } from "@/lib/manageMonth";
+import { fillJurisdiction } from "@/lib/jurisdiction";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     "assignee",
     "status",
     "region",
+    "jurisdiction",
     "debtAmount",
     "job",
     "source",
@@ -39,10 +41,21 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
 
   // If appliedAt changed and manageMonth not explicitly set, auto-fill only when empty
+  const existing = await prisma.customer.findUnique({ where: { id } });
   if (data.appliedAt !== undefined && data.manageMonth === undefined) {
-    const existing = await prisma.customer.findUnique({ where: { id } });
     if (existing && !existing.manageMonth) {
       data.manageMonth = resolveManageMonth("", data.appliedAt);
+    }
+  }
+
+  // Auto-fill jurisdiction when empty (manual override preserved)
+  if (data.jurisdiction !== undefined) {
+    // keep explicit value (may be cleared to "" then refill from region)
+    const regionForFill = data.region ?? existing?.region ?? "";
+    data.jurisdiction = fillJurisdiction(regionForFill, data.jurisdiction);
+  } else if (data.region !== undefined) {
+    if (existing && !String(existing.jurisdiction || "").trim()) {
+      data.jurisdiction = fillJurisdiction(data.region, "");
     }
   }
 

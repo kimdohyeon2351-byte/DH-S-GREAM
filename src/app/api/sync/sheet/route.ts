@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizePhone, type CustomerInput } from "@/lib/csv";
 import { parseGoogleSourceXlsx, resolveSourcePath } from "@/lib/sheetSync";
 import { resolveManageMonth } from "@/lib/manageMonth";
+import { fillJurisdiction } from "@/lib/jurisdiction";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ type DbCustomer = {
   assignee: string;
   status: string;
   region: string;
+  jurisdiction: string;
   debtAmount: string;
   job: string;
   source: string;
@@ -114,7 +116,11 @@ async function upsertCustomer(
 
   // mapRow already derives manageMonth; ensure again for safety
   const rowManage = resolveManageMonth(row.manageMonth, row.appliedAt);
-  const rowWithMonth: CustomerInput = { ...row, manageMonth: rowManage };
+  const rowWithMonth: CustomerInput = {
+    ...row,
+    manageMonth: rowManage,
+    jurisdiction: fillJurisdiction(row.region, row.jurisdiction),
+  };
 
   if (!existing) {
     const createdRow = await prisma.customer.create({ data: rowWithMonth });
@@ -127,6 +133,7 @@ async function upsertCustomer(
       assignee: createdRow.assignee,
       status: createdRow.status,
       region: createdRow.region,
+      jurisdiction: createdRow.jurisdiction,
       debtAmount: createdRow.debtAmount,
       job: createdRow.job,
       source: createdRow.source,
@@ -147,6 +154,12 @@ async function upsertCustomer(
     assignee: pickPresent(rowWithMonth.assignee, existing.assignee),
     status: pickPresent(rowWithMonth.status, existing.status),
     region: pickPresent(rowWithMonth.region, existing.region),
+    jurisdiction: existing.jurisdiction
+      ? pickPresent(rowWithMonth.jurisdiction, existing.jurisdiction)
+      : fillJurisdiction(
+          pickPresent(rowWithMonth.region, existing.region),
+          rowWithMonth.jurisdiction
+        ),
     debtAmount: pickPresent(rowWithMonth.debtAmount, existing.debtAmount),
     job: pickPresent(rowWithMonth.job, existing.job),
     source: pickPresent(rowWithMonth.source, existing.source),
@@ -161,6 +174,7 @@ async function upsertCustomer(
     data.assignee !== existing.assignee ||
     data.status !== existing.status ||
     data.region !== existing.region ||
+    data.jurisdiction !== existing.jurisdiction ||
     data.debtAmount !== existing.debtAmount ||
     data.job !== existing.job ||
     data.source !== existing.source ||

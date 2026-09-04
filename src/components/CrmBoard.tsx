@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { STATUS_COLORS, STATUS_OPTIONS, memoToneClass, rowToneClass } from "@/lib/constants";
+import { isJurisdictionNeedsReview } from "@/lib/jurisdiction";
 import { currentManageMonth } from "@/lib/manageMonth";
 import type { Customer, ListResponse } from "./types";
 import CustomerEditModal from "./CustomerEditModal";
@@ -23,6 +24,7 @@ export default function CrmBoard() {
   const [editTarget, setEditTarget] = useState<Customer | null | undefined>(undefined);
   const [importOpen, setImportOpen] = useState(false);
   const [sheetSyncing, setSheetSyncing] = useState(false);
+  const [juriFilling, setJuriFilling] = useState(false);
   const [toast, setToast] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [quickSavingId, setQuickSavingId] = useState<number | null>(null);
 
@@ -118,6 +120,32 @@ export default function CrmBoard() {
     }
   }
 
+  async function backfillJurisdiction() {
+    if (juriFilling) return;
+    if (!confirm("지역이 있고 관할이 비어 있는 행을 초안 매핑으로 채울까요?\n(이미 입력된 관할은 유지 · 실무 확인 권장)")) return;
+    setJuriFilling(true);
+    setToast(null);
+    try {
+      const res = await fetch("/api/customers/backfill-jurisdiction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force: false }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "관할 채우기 실패");
+      const msg = `관할 다시 채우기: 갱신 ${data.updated}건 · 유지 ${data.skipped}건 · 확인필요 ${data.needsReview}건 (전체 ${data.total})`;
+      setToast({ type: "ok", text: msg });
+      alert(msg);
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "관할 채우기 실패";
+      setToast({ type: "err", text: msg });
+      alert(msg);
+    } finally {
+      setJuriFilling(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -196,6 +224,14 @@ export default function CrmBoard() {
               {sheetSyncing ? "시트 가져오는 중…" : "구글 시트에서 가져오기"}
             </button>
             <button
+              onClick={backfillJurisdiction}
+              disabled={juriFilling}
+              title="초안(실무 확인 권장) — 빈 관할만 지역에서 채움"
+              className="rounded-xl border border-amber-200 bg-amber-50 text-amber-900 px-3 py-2 text-sm font-semibold hover:bg-amber-100 disabled:opacity-60"
+            >
+              {juriFilling ? "관할 채우는 중…" : "관할 다시 채우기"}
+            </button>
+            <button
               onClick={() => setEditTarget(null)}
               className="rounded-xl bg-brand-600 text-white px-3 py-2 text-sm font-semibold hover:bg-brand-700"
             >
@@ -221,16 +257,17 @@ export default function CrmBoard() {
         <div className="w-full">
           <table className="table-fixed w-full text-sm">
             <colgroup>
-              <col style={{ width: "4%" }} />
-              <col style={{ width: "8%" }} />
+              <col style={{ width: "3%" }} />
               <col style={{ width: "7%" }} />
-              <col style={{ width: "7%" }} />
-              <col style={{ width: "11%" }} />
-              <col style={{ width: "11%" }} />
               <col style={{ width: "6%" }} />
               <col style={{ width: "6%" }} />
-              <col style={{ width: "32%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "5%" }} />
               <col style={{ width: "8%" }} />
+              <col style={{ width: "5%" }} />
+              <col style={{ width: "30%" }} />
+              <col style={{ width: "10%" }} />
             </colgroup>
             <thead className="bg-slate-50 text-slate-600 text-left">
               <tr>
@@ -241,6 +278,7 @@ export default function CrmBoard() {
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">연락처</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">상담단계</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">지역</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap" title="초안(실무 확인 권장)">관할</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">직업</th>
                 <th className="px-1.5 py-2 font-medium">메모</th>
                 <th className="px-1.5 py-2 font-medium whitespace-nowrap">작업</th>
@@ -270,6 +308,16 @@ export default function CrmBoard() {
                     </select>
                   </td>
                   <td className="px-1.5 py-2 truncate" title={c.region || ""}>{c.region}</td>
+                  <td
+                    className={`px-1.5 py-2 truncate text-xs ${
+                      isJurisdictionNeedsReview(c.jurisdiction || "")
+                        ? "bg-amber-100 text-amber-900 font-medium"
+                        : "text-slate-700"
+                    }`}
+                    title={(c.jurisdiction || "") + " · 초안(실무 확인 권장)"}
+                  >
+                    {c.jurisdiction || "-"}
+                  </td>
                   <td className="px-1.5 py-2 truncate" title={c.job || ""}>{c.job}</td>
                   <td className="px-1.5 py-2">
                     <textarea
@@ -292,7 +340,7 @@ export default function CrmBoard() {
               ))}
               {!loading && (data?.customers.length || 0) === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-1.5 py-10 text-center text-slate-500">
+                  <td colSpan={11} className="px-1.5 py-10 text-center text-slate-500">
                     조건에 맞는 고객이 없습니다.
                   </td>
                 </tr>
@@ -322,6 +370,12 @@ export default function CrmBoard() {
             </div>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600">
               <div><dt className="inline text-slate-400">지역 </dt><dd className="inline">{c.region || "-"}</dd></div>
+              <div>
+                <dt className="inline text-slate-400" title="초안(실무 확인 권장)">관할 </dt>
+                <dd className={`inline ${isJurisdictionNeedsReview(c.jurisdiction || "") ? "bg-amber-100 text-amber-900 px-1 rounded" : ""}`}>
+                  {c.jurisdiction || "-"}
+                </dd>
+              </div>
               <div><dt className="inline text-slate-400">직업 </dt><dd className="inline">{c.job || "-"}</dd></div>
             </dl>
             {c.memo && <p className={`text-xs text-slate-700 rounded-lg p-2 whitespace-pre-wrap ${memoToneClass(c.status)}`}>{c.memo}</p>}

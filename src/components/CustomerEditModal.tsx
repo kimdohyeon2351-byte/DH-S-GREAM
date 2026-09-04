@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { STATUS_OPTIONS } from "@/lib/constants";
 import { currentManageMonth, deriveManageMonth } from "@/lib/manageMonth";
+import { resolveJurisdiction } from "@/lib/jurisdiction";
 import type { Customer } from "./types";
 
 type Props = {
@@ -20,6 +21,7 @@ const empty: Omit<Customer, "id"> = {
   assignee: "",
   status: "신규",
   region: "",
+  jurisdiction: "",
   debtAmount: "",
   job: "",
   source: "",
@@ -44,6 +46,7 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
         assignee: customer.assignee,
         status: customer.status,
         region: customer.region,
+        jurisdiction: customer.jurisdiction || "",
         debtAmount: customer.debtAmount,
         job: customer.job,
         source: customer.source,
@@ -96,6 +99,9 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
         const derived = deriveManageMonth(String(value));
         if (derived) next.manageMonth = derived;
       }
+      if (key === "region" && !String(f.jurisdiction || "").trim()) {
+        next.jurisdiction = resolveJurisdiction(String(value));
+      }
       return next;
     });
   }
@@ -139,6 +145,16 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
           </Field>
           <Field label="지역">
             <input className="field" value={form.region} onChange={(e) => set("region", e.target.value)} />
+          </Field>
+          <Field label="관할 (초안)">
+            <input
+              className="field"
+              value={form.jurisdiction}
+              onChange={(e) => set("jurisdiction", e.target.value)}
+              title="초안(실무 확인 권장) — 지역에서 자동 채움, 수동 수정 가능"
+              placeholder="지역 입력 시 자동 · 수동 수정 가능"
+            />
+            <span className="mt-1 block text-[11px] text-amber-700">초안(실무 확인 권장) · 수동 덮어쓰기 가능</span>
           </Field>
           <Field label="직업">
             <input className="field" value={form.job} onChange={(e) => set("job", e.target.value)} />

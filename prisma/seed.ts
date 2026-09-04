@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { normalizeStatus } from "../src/lib/constants";
 import { deriveManageMonth } from "../src/lib/manageMonth";
+import { fillJurisdiction } from "../src/lib/jurisdiction";
 
 const prisma = new PrismaClient();
 
@@ -37,6 +38,7 @@ async function main() {
         assignee: (r.담당자 || "").trim(),
         status: normalizeStatus(r.상태 || "신규"),
         region: (r.지역 || "").trim(),
+        jurisdiction: fillJurisdiction((r.지역 || "").trim(), ""),
         debtAmount: String(r.채무액 ?? "").trim(),
         job: (r.직업 || "").trim(),
         source: (r.타이틀 || "").trim(),

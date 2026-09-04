@@ -7,6 +7,7 @@ export type Customer = {
   assignee: string;
   status: string;
   region: string;
+  jurisdiction: string;
   debtAmount: string;
   job: string;
   source: string;

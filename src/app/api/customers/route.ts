@@ -5,6 +5,7 @@ import {
   appliedMonthFromDate,
   resolveManageMonth,
 } from "@/lib/manageMonth";
+import { fillJurisdiction } from "@/lib/jurisdiction";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,10 @@ export async function POST(req: NextRequest) {
       assignee: String(body.assignee || "").trim(),
       status: normalizeStatus(String(body.status || "신규")),
       region: String(body.region || "").trim(),
+      jurisdiction: fillJurisdiction(
+        String(body.region || "").trim(),
+        body.jurisdiction != null ? String(body.jurisdiction) : ""
+      ),
       debtAmount: String(body.debtAmount || "").trim(),
       job: String(body.job || "").trim(),
       source: String(body.source || "").trim(),
