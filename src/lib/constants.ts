@@ -8,7 +8,6 @@ export const STATUS_OPTIONS = [
   "관리",
   "내방상담",
   "출장상담",
-  "계약",
   "수임완료",
   "취소",
   "자격불가",
@@ -42,7 +41,7 @@ export function normalizeStatus(raw: string): string {
     "재상담": "재상담",
     "내방상담": "내방상담",
     "출장상담": "출장상담",
-    "계약": "계약",
+    "계약": "수임완료",
     "종료": "종료",
     "수임완료": "수임완료",
     "수임 완료": "수임완료",
@@ -55,8 +54,12 @@ export function normalizeStatus(raw: string): string {
     "1차서류도착": "1차 서류 도착",
     "장기부재": "부재",
     "관리 중 부재": "관리",
-    "계약금 입금 완료": "계약",
-    "착수금 입금 예정": "계약",
+    "계약금 입금 완료": "수임완료",
+    "착수금 입금 예정": "수임완료",
+    "계약금입금완료": "수임완료",
+    "착수금입금예정": "수임완료",
+    "계약완료": "수임완료",
+    "계약 완료": "수임완료",
     "보류": "관리",
     "중복디비": "취소",
     "해피콜": "관리",
@@ -64,6 +67,8 @@ export function normalizeStatus(raw: string): string {
   if (map[s]) return map[s];
   const compact = s.replace(/ /g, "");
   if (map[compact]) return map[compact];
+  // Any remaining 계약 variants → 수임완료
+  if (s.includes("계약") || compact.includes("계약")) return "수임완료";
   if ((STATUS_OPTIONS as readonly string[]).includes(s)) return s;
   return s;
 }
@@ -78,7 +83,6 @@ export const STATUS_COLORS: Record<string, string> = {
   "관리": "bg-transparent text-slate-700",
   "내방상담": "bg-transparent text-slate-700",
   "출장상담": "bg-transparent text-slate-700",
-  "계약": "bg-transparent text-slate-700",
   "수임완료": "bg-sky-100 text-sky-800",
   "취소": "bg-red-100 text-red-800",
   "자격불가": "bg-red-100 text-red-800",

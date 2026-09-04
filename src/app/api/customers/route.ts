@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
   // statusCounts for the same filtered set as the list (q/assignee/status/appliedMonth/manageMonth)
   const statusCounts: Record<string, number> = {};
   for (const c of customers) {
-    const key = c.status || "신규";
+    const key = normalizeStatus(c.status || "신규");
     statusCounts[key] = (statusCounts[key] || 0) + 1;
   }
 
