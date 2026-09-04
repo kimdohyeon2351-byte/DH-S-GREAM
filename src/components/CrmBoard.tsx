@@ -6,6 +6,7 @@ import { currentManageMonth } from "@/lib/manageMonth";
 import type { Customer, ListResponse } from "./types";
 import CustomerEditModal from "./CustomerEditModal";
 import ImportModal from "./ImportModal";
+import StatusPieChart from "./StatusPieChart";
 
 const THIS_MONTH = currentManageMonth();
 
@@ -210,6 +211,10 @@ export default function CrmBoard() {
           <button onClick={load} className="text-brand-700 hover:underline text-xs">새로고침</button>
         </div>
       </section>
+
+      {data && (
+        <StatusPieChart statusCounts={data.statusCounts || {}} />
+      )}
 
       {/* Desktop table */}
       <section className="hidden md:block rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">

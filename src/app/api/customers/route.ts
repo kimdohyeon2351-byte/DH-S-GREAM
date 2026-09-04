@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
   // appliedMonth filters on appliedAt string prefix (YYYY-MM / YYYY.MM / etc.)
   // Fetch candidates then filter in JS when appliedMonth set, OR use OR contains patterns.
-  const [allForMonths, customersRaw, totalRaw, assignees, statusGroups] =
+  const [allForMonths, customersRaw, totalRaw, assignees] =
     await Promise.all([
       prisma.customer.findMany({
         select: { appliedAt: true, manageMonth: true },
@@ -45,10 +45,6 @@ export async function GET(req: NextRequest) {
         distinct: ["assignee"],
         orderBy: { assignee: "asc" },
       }),
-      prisma.customer.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-      }),
     ]);
 
   let customers = customersRaw;
@@ -60,6 +56,13 @@ export async function GET(req: NextRequest) {
       return m === appliedMonth;
     });
     total = customers.length;
+  }
+
+  // statusCounts for the same filtered set as the list (q/assignee/status/appliedMonth/manageMonth)
+  const statusCounts: Record<string, number> = {};
+  for (const c of customers) {
+    const key = c.status || "신규";
+    statusCounts[key] = (statusCounts[key] || 0) + 1;
   }
 
   const appliedMonthsSet = new Set<string>();
@@ -76,9 +79,7 @@ export async function GET(req: NextRequest) {
     customers,
     total,
     assignees: assignees.map((a) => a.assignee).filter(Boolean),
-    statusCounts: Object.fromEntries(
-      statusGroups.map((g) => [g.status, g._count._all])
-    ),
+    statusCounts,
     appliedMonths: Array.from(appliedMonthsSet).sort(sortDesc),
     manageMonths: Array.from(manageMonthsSet).sort(sortDesc),
   });
