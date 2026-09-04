@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/constants";
+import { STATUS_COLORS, STATUS_OPTIONS, rowToneClass } from "@/lib/constants";
 import { currentManageMonth } from "@/lib/manageMonth";
 import type { Customer, ListResponse } from "./types";
 import CustomerEditModal from "./CustomerEditModal";
@@ -243,7 +243,7 @@ export default function CrmBoard() {
             </thead>
             <tbody>
               {(data?.customers || []).map((c, i) => (
-                <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/70 align-top">
+                <tr key={c.id} className={`border-t border-slate-100 align-top ${rowToneClass(c.status) || "hover:bg-slate-50/70"}`}>
                   <td className="px-1.5 py-2 whitespace-nowrap tabular-nums text-slate-500">{i + 1}</td>
                   <td className="px-1.5 py-2 whitespace-nowrap">{c.appliedAt}</td>
                   <td className="px-1.5 py-2 whitespace-nowrap tabular-nums text-slate-700">{c.manageMonth || "-"}</td>
@@ -300,7 +300,7 @@ export default function CrmBoard() {
       {/* Mobile cards */}
       <section className="md:hidden space-y-3">
         {(data?.customers || []).map((c, i) => (
-          <article key={c.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
+          <article key={c.id} className={`rounded-2xl border border-slate-200 p-4 shadow-sm space-y-2 ${rowToneClass(c.status) || "bg-white"}`}>
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-xs text-slate-400 mb-0.5">
