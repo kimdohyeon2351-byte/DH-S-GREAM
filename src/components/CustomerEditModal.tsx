@@ -92,17 +92,14 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
           </button>
         </div>
         <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="신청일">
+            <input className="field" value={form.appliedAt} onChange={(e) => set("appliedAt", e.target.value)} placeholder="YYYY-MM-DD" />
+          </Field>
           <Field label="이름 *">
             <input className="field" value={form.name} onChange={(e) => set("name", e.target.value)} />
           </Field>
           <Field label="연락처">
             <input className="field" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-          </Field>
-          <Field label="신청일">
-            <input className="field" value={form.appliedAt} onChange={(e) => set("appliedAt", e.target.value)} placeholder="YYYY-MM-DD" />
-          </Field>
-          <Field label="담당자">
-            <input className="field" value={form.assignee} onChange={(e) => set("assignee", e.target.value)} />
           </Field>
           <Field label="상담단계">
             <select className="field" value={form.status} onChange={(e) => set("status", e.target.value)}>
@@ -117,14 +114,8 @@ export default function CustomerEditModal({ customer, open, onClose, onSaved }: 
           <Field label="지역">
             <input className="field" value={form.region} onChange={(e) => set("region", e.target.value)} />
           </Field>
-          <Field label="채무액">
-            <input className="field" value={form.debtAmount} onChange={(e) => set("debtAmount", e.target.value)} />
-          </Field>
           <Field label="직업">
             <input className="field" value={form.job} onChange={(e) => set("job", e.target.value)} />
-          </Field>
-          <Field label="유입경로">
-            <input className="field" value={form.source} onChange={(e) => set("source", e.target.value)} />
           </Field>
           <div className="sm:col-span-2">
             <Field label="메모">

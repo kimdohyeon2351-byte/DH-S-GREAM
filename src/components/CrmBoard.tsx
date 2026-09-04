@@ -10,7 +10,6 @@ export default function CrmBoard() {
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-  const [assignee, setAssignee] = useState("");
   const [status, setStatus] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [editTarget, setEditTarget] = useState<Customer | null | undefined>(undefined);
@@ -29,7 +28,6 @@ export default function CrmBoard() {
     try {
       const params = new URLSearchParams();
       if (debouncedQ) params.set("q", debouncedQ);
-      if (assignee) params.set("assignee", assignee);
       if (status) params.set("status", status);
       const res = await fetch(`/api/customers?${params.toString()}`, { cache: "no-store" });
       const json = (await res.json()) as ListResponse;
@@ -37,7 +35,7 @@ export default function CrmBoard() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, assignee, status]);
+  }, [debouncedQ, status]);
 
   useEffect(() => {
     load();
@@ -100,7 +98,7 @@ export default function CrmBoard() {
     <div className="space-y-4">
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
             <label className="text-sm">
               <span className="mb-1 block text-slate-600 font-medium">검색 (이름/연락처/메모)</span>
               <input
@@ -109,19 +107,6 @@ export default function CrmBoard() {
                 placeholder="검색어 입력"
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               />
-            </label>
-            <label className="text-sm">
-              <span className="mb-1 block text-slate-600 font-medium">담당자</span>
-              <select
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white"
-              >
-                <option value="">전체</option>
-                {(data?.assignees || []).map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
             </label>
             <label className="text-sm">
               <span className="mb-1 block text-slate-600 font-medium">상담단계</span>
@@ -177,26 +162,24 @@ export default function CrmBoard() {
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 text-left">
               <tr>
+                <th className="px-3 py-3 font-medium whitespace-nowrap">번호</th>
+                <th className="px-3 py-3 font-medium whitespace-nowrap">신청일</th>
                 <th className="px-3 py-3 font-medium whitespace-nowrap">이름</th>
                 <th className="px-3 py-3 font-medium whitespace-nowrap">연락처</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">신청일</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">담당자</th>
                 <th className="px-3 py-3 font-medium whitespace-nowrap">상담단계</th>
                 <th className="px-3 py-3 font-medium whitespace-nowrap">지역</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">채무액</th>
                 <th className="px-3 py-3 font-medium whitespace-nowrap">직업</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">유입경로</th>
                 <th className="px-3 py-3 font-medium min-w-[180px]">메모</th>
                 <th className="px-3 py-3 font-medium whitespace-nowrap">작업</th>
               </tr>
             </thead>
             <tbody>
-              {(data?.customers || []).map((c) => (
+              {(data?.customers || []).map((c, i) => (
                 <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/70 align-top">
+                  <td className="px-3 py-3 whitespace-nowrap tabular-nums text-slate-500">{i + 1}</td>
+                  <td className="px-3 py-3 whitespace-nowrap">{c.appliedAt}</td>
                   <td className="px-3 py-3 font-medium whitespace-nowrap">{c.name}</td>
                   <td className="px-3 py-3 whitespace-nowrap tabular-nums">{c.phone}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.appliedAt}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.assignee}</td>
                   <td className="px-3 py-3">
                     <select
                       value={c.status}
@@ -213,9 +196,7 @@ export default function CrmBoard() {
                     </select>
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap">{c.region}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.debtAmount}</td>
                   <td className="px-3 py-3 whitespace-nowrap">{c.job}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.source}</td>
                   <td className="px-3 py-3">
                     <textarea
                       defaultValue={c.memo}
@@ -237,7 +218,7 @@ export default function CrmBoard() {
               ))}
               {!loading && (data?.customers.length || 0) === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-3 py-10 text-center text-slate-500">
+                  <td colSpan={9} className="px-3 py-10 text-center text-slate-500">
                     조건에 맞는 고객이 없습니다.
                   </td>
                 </tr>
@@ -249,10 +230,14 @@ export default function CrmBoard() {
 
       {/* Mobile cards */}
       <section className="md:hidden space-y-3">
-        {(data?.customers || []).map((c) => (
+        {(data?.customers || []).map((c, i) => (
           <article key={c.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div>
+                <p className="text-xs text-slate-400 mb-0.5">
+                  #{i + 1}
+                  {c.appliedAt ? ` · ${c.appliedAt}` : ""}
+                </p>
                 <h3 className="font-semibold text-base">{c.name}</h3>
                 <p className="text-sm text-slate-600 tabular-nums">{c.phone}</p>
               </div>
@@ -261,11 +246,8 @@ export default function CrmBoard() {
               </span>
             </div>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600">
-              <div><dt className="inline text-slate-400">신청일 </dt><dd className="inline">{c.appliedAt || "-"}</dd></div>
-              <div><dt className="inline text-slate-400">담당 </dt><dd className="inline">{c.assignee || "-"}</dd></div>
               <div><dt className="inline text-slate-400">지역 </dt><dd className="inline">{c.region || "-"}</dd></div>
-              <div><dt className="inline text-slate-400">채무 </dt><dd className="inline">{c.debtAmount || "-"}</dd></div>
-              <div className="col-span-2"><dt className="inline text-slate-400">유입 </dt><dd className="inline">{c.source || "-"}</dd></div>
+              <div><dt className="inline text-slate-400">직업 </dt><dd className="inline">{c.job || "-"}</dd></div>
             </dl>
             {c.memo && <p className="text-xs text-slate-700 bg-slate-50 rounded-lg p-2 whitespace-pre-wrap">{c.memo}</p>}
             <div className="flex gap-2 pt-1">
