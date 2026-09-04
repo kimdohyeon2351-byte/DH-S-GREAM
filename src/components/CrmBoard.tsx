@@ -158,34 +158,45 @@ export default function CrmBoard() {
 
       {/* Desktop table */}
       <section className="hidden md:block rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+        <div className="w-full">
+          <table className="table-fixed w-full text-sm">
+            <colgroup>
+              <col style={{ width: "4%" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "36%" }} />
+              <col style={{ width: "8%" }} />
+            </colgroup>
             <thead className="bg-slate-50 text-slate-600 text-left">
               <tr>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">번호</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">신청일</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">이름</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">연락처</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">상담단계</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">지역</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">직업</th>
-                <th className="px-3 py-3 font-medium min-w-[180px]">메모</th>
-                <th className="px-3 py-3 font-medium whitespace-nowrap">작업</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">번호</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">신청일</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">이름</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">연락처</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">상담단계</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">지역</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">직업</th>
+                <th className="px-1.5 py-2 font-medium">메모</th>
+                <th className="px-1.5 py-2 font-medium whitespace-nowrap">작업</th>
               </tr>
             </thead>
             <tbody>
               {(data?.customers || []).map((c, i) => (
                 <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/70 align-top">
-                  <td className="px-3 py-3 whitespace-nowrap tabular-nums text-slate-500">{i + 1}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.appliedAt}</td>
-                  <td className="px-3 py-3 font-medium whitespace-nowrap">{c.name}</td>
-                  <td className="px-3 py-3 whitespace-nowrap tabular-nums">{c.phone}</td>
-                  <td className="px-3 py-3">
+                  <td className="px-1.5 py-2 whitespace-nowrap tabular-nums text-slate-500">{i + 1}</td>
+                  <td className="px-1.5 py-2 whitespace-nowrap">{c.appliedAt}</td>
+                  <td className="px-1.5 py-2 font-medium truncate" title={c.name}>{c.name}</td>
+                  <td className="px-1.5 py-2 whitespace-nowrap tabular-nums">{c.phone}</td>
+                  <td className="px-1.5 py-2">
                     <select
                       value={c.status}
                       disabled={quickSavingId === c.id}
                       onChange={(e) => quickUpdate(c.id, { status: e.target.value })}
-                      className={`rounded-full px-2 py-1 text-xs font-medium border-0 ${STATUS_COLORS[c.status] || "bg-slate-100 text-slate-700"}`}
+                      className={`max-w-full rounded-full px-2 py-1 text-xs font-medium border-0 ${STATUS_COLORS[c.status] || "bg-slate-100 text-slate-700"}`}
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -195,21 +206,21 @@ export default function CrmBoard() {
                       )}
                     </select>
                   </td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.region}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{c.job}</td>
-                  <td className="px-3 py-3">
+                  <td className="px-1.5 py-2 truncate" title={c.region || ""}>{c.region}</td>
+                  <td className="px-1.5 py-2 truncate" title={c.job || ""}>{c.job}</td>
+                  <td className="px-1.5 py-2">
                     <textarea
                       defaultValue={c.memo}
                       key={`${c.id}-${c.updatedAt || c.memo}`}
-                      rows={2}
-                      className="w-full min-w-[160px] rounded-lg border border-slate-200 px-2 py-1 text-xs"
+                      rows={3}
+                      className="w-full resize-y rounded-lg border border-slate-200 px-2 py-1 text-xs"
                       onBlur={(e) => {
                         if (e.target.value !== c.memo) quickUpdate(c.id, { memo: e.target.value });
                       }}
                     />
                   </td>
-                  <td className="px-3 py-3 whitespace-nowrap">
-                    <div className="flex gap-2">
+                  <td className="px-1.5 py-2">
+                    <div className="flex flex-col gap-1">
                       <button onClick={() => setEditTarget(c)} className="text-brand-700 hover:underline text-xs">수정</button>
                       <button onClick={() => remove(c.id)} className="text-rose-600 hover:underline text-xs">삭제</button>
                     </div>
@@ -218,7 +229,7 @@ export default function CrmBoard() {
               ))}
               {!loading && (data?.customers.length || 0) === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-slate-500">
+                  <td colSpan={9} className="px-1.5 py-10 text-center text-slate-500">
                     조건에 맞는 고객이 없습니다.
                   </td>
                 </tr>
