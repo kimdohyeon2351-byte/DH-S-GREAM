@@ -181,7 +181,7 @@ export default function StatusPieChart({ statusCounts }: Props) {
           </svg>
         </div>
         <ul
-          className="flex-1 w-full grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 text-sm"
+          className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 text-sm"
           aria-label="상담단계별 건수와 비율"
         >
           {slices.map((s) => (
